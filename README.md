@@ -9,7 +9,7 @@
 
 # Secciones
 
-- [ - ] [Requisitos de Instalación y materiales](/SECCION_1.md)
+- [ - ] [Requisitos de Instalación y materiales](./notes/SECCION_1.md)
 - [ ] Repository Pattern
 - [ ] Bases de Datos
 - [ ] Generación de JSON Web Tokens (JWT)
