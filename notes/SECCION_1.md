@@ -64,14 +64,156 @@ _No debería afectar si:_
 
 > ![NOTE]
 > En mi caso, voy a utilizar Bun, pero en el curso utiliza npm
-> De igual forma, voy a indicar los paquetes que instala y cómo lo hago yo también
+> De igual forma, voy a indicar los paquetes que instala
 
-### Instalación (Curso)
+### Instalación
 
 - Inicializamos el proyecto
 
 ```bash
 npm init -y
+# o
+bun init -y
 ```
 
--
+> !NOTE
+> Por defecto, al hacer bun init -y se instala typescript y se crea un archivo tsconfig.json
+> Por lo que el paso 3 no hace falta hacerlo
+
+- Instalar TypeScript y demás dependencias
+
+```bash
+npm i -D typescript @types/node ts-node-dev rimraf
+# o
+bun i -D ts-node-dev rimraf
+```
+
+- Inicializar el archivo de configuración de TypeScript (Se puede configurar a gusto). Si estás utilizando bun, podes eliminar el archivo `tsconfig.json` para generarlo con esta configuración
+
+```bash
+npx tsc --init --outDir dist/ --rootDir src
+# o
+bun tsc --init --outDir dist/ --rootDir src
+```
+
+- Otra opción es cambiar a mano la configuración
+
+```json
+{
+  "compilerOptions": {
+    // ...
+    "rootDir": "src",
+    "outDir": "dist/"
+    // ...
+  }
+}
+```
+
+- Por ultimo vamos a agregar los secripts en el `package.json`
+
+```json
+{
+  "scripts": {
+    "dev": "ts-node-dev --respawn src/app.ts",
+    "build": "rimraf ./dist && tsc",
+    "start": "bun build && bun dist/app.js"
+  }
+}
+```
+
+- Con bun hay que hacer aunlagunas pequeñas modificaciones
+
+```json
+{
+  //...
+  "scripts": {
+    "dev": "bun --watch src/app.ts",
+    "build": "rimraf ./dist && tsc",
+    "start": "bun run build && bun dist/app.js"
+  }
+}
+```
+
+> !NOTE
+> Si utilizas Bun, no es necesario usar ts-node-dev, ya que Bun permite el uso de TypeScript nativamente
+
+## Explicación de Directorios a Usar
+
+```bash
+|- src
+  |- presentation # Lo que está cerca de los usuarios
+  |- infrastructure # Punto intermedio entre domain y presentation
+  |- domain # Las reglas que gobiernan la aplicación
+```
+
+`domain`: No deberían tener dependencias externas.
+`infrastructure`: Es donde se va a crear las implementaciones respectivas, mappers (transformación de datos).
+
+## Creación de servidor Express
+
+- Primero creamos una función principal autoinvocada (main)
+
+```typescript
+(() => {
+  main();
+})();
+
+async function main() {
+  // todo: Inicio de nuestro server
+}
+```
+
+- Creamos el archivo `server.ts` en la carpeta `presentation`
+
+```typescript
+export class Server {
+  constructor() {
+    // Aqui recibimos la configuración
+    // Mis clases deben estar abiertas a expansión y cerradas a modificación
+  }
+
+  async start() {
+    // La idea es que dentro de start tengamos una app backend
+    // Ya sea con Express, Fastify, etc
+  }
+}
+```
+
+- En este curso se usa Express por lo que hay que instalarlo
+
+```bash
+npm i express @types/express
+# o
+bun i express @types/express
+```
+
+- Creamos una instancia de express en nuestro server
+
+```typescript
+import express from "express";
+
+export class Server {
+  public readonly app = express();
+
+  constructor() {}
+
+  async start() {
+    this.app.listen(3000, () => {
+      console.log("Server started on port 3000");
+    });
+  }
+}
+```
+
+- Para iniciar el server debemos crear una instancia de server y llamar al metodo `start`
+
+```typescript
+async function main() {
+  new Server().start();
+}
+```
+
+_Conceptos de Arquitectura Limpia_
+
+- Cuando una función o constructor recibe más de 1 o 2 argumentos, deberiamos pasarle un objeto
+- En nuestro caso para el constructor de Server, le pasamos un objeto `options` de una interface `Options` creada por nosotros
